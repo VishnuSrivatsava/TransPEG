@@ -1,6 +1,6 @@
 import sys
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5 import QtWidgets, QtGui
+from PyQt5.QtWidgets import QFileDialog, QTextEdit
 from googletrans import Translator
 import re
 import subprocess
@@ -35,6 +35,10 @@ class SubtitleTranslator(QtWidgets.QWidget):
         self.addSubtitlesBtn = QtWidgets.QPushButton('Add Translated Subtitles to Video', self)
         self.addSubtitlesBtn.clicked.connect(self.addSubtitlesToVideo)
 
+        # Create a text area to display output messages
+        self.outputTextEdit = QTextEdit(self)
+        self.outputTextEdit.setReadOnly(True)
+
         # Set layout
         vbox = QtWidgets.QVBoxLayout()
         vbox.addWidget(self.selectFileBtn)
@@ -42,6 +46,7 @@ class SubtitleTranslator(QtWidgets.QWidget):
         vbox.addWidget(self.targetLanguageComboBox)
         vbox.addWidget(self.translateBtn)
         vbox.addWidget(self.addSubtitlesBtn)
+        vbox.addWidget(self.outputTextEdit)
         self.setLayout(vbox)
 
         self.fileName = ""
@@ -75,6 +80,8 @@ class SubtitleTranslator(QtWidgets.QWidget):
                 display_text = title if title else f'Subtitle Track {i} ({language_code})'
                 self.subtitleTrackComboBox.addItem(display_text)
 
+            self.outputTextEdit.append('Subtitle tracks loaded.')
+
     def extractSubtitles(self):
         # Get selected subtitle track from drop-down menu
         selected_track = self.subtitleTrackComboBox.currentText()
@@ -93,10 +100,10 @@ class SubtitleTranslator(QtWidgets.QWidget):
             ])
 
             # Read the extracted subtitles and store lines
-            with open(output_subtitle, 'r') as f:
+            with open(output_subtitle, 'r', encoding='utf-8') as f:
                 self.subtitles = f.readlines()
 
-            print(f'Subtitle segments extracted from {selected_track}.')
+            self.outputTextEdit.append(f'Subtitle segments extracted from {selected_track}.')
 
     def clean_subtitle_text(self, text):
         # Remove <i> and </i> tags
@@ -134,8 +141,7 @@ class SubtitleTranslator(QtWidgets.QWidget):
             with open('translated_subtitles.srt', 'wb') as f:
                 f.writelines(translated_subtitles)
 
-            print(f'Translating subtitles to {targetLanguage} and saving as translated_subtitles.srt')
-
+            self.outputTextEdit.append(f'Translating subtitles to {targetLanguage} and saving as translated_subtitles.srt')
 
     def addSubtitlesToVideo(self):
         # Get the file extension of the original video file
@@ -158,10 +164,7 @@ class SubtitleTranslator(QtWidgets.QWidget):
             '-y', output_video
         ])
 
-
-
-
-        print(f'Adding translated subtitles to video and saving as {output_video}')
+        self.outputTextEdit.append(f'Adding translated subtitles to video and saving as {output_video}')
 
 
 if __name__ == '__main__':
