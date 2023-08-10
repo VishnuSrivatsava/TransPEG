@@ -25,7 +25,7 @@ This is a simple PyQt5 application that allows you to translate subtitles of a v
 1. Clone this repository:
 
    ```bash
-   git clone https://github.com/yourusername/subtitle-translator.git
+   git clone https://github.com/VishnuSrivatsava/TransPEG.git
 
 2. Install the required dependencies:
 
