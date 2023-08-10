@@ -20,7 +20,7 @@ This is a simple PyQt5 application that allows you to translate subtitles of a v
 
 ## Installation
 
-### Install the dependencies and just run the .exe file or run use the python script to run on your own.
+### Install the dependencies and just run the .exe file or run the python script.
 
 1. Clone this repository:
 
