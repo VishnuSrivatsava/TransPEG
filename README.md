@@ -41,4 +41,15 @@ This is a simple PyQt5 application that allows you to translate subtitles of a v
 ![Screenshot 1](images/image1.png)
 ![Screenshot 2](images/image2.png)
 
+
+## Notes
+
+- Make sure you have `ffmpeg` properly installed on your system.
+- The application uses Google Translate for translation.
+- Translated subtitles are saved as `translated_subtitles.srt`.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
     
