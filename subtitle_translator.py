@@ -1,10 +1,9 @@
 import sys
-from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtWidgets import QFileDialog, QTextEdit
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QFileDialog, QTextEdit, QLabel
 from googletrans import Translator
 import re
 import subprocess
-import ffmpeg
 
 class SubtitleTranslator(QtWidgets.QWidget):
     def __init__(self):
@@ -26,6 +25,9 @@ class SubtitleTranslator(QtWidgets.QWidget):
         self.targetLanguageComboBox.addItem('English')
         self.targetLanguageComboBox.addItem('French')
         self.targetLanguageComboBox.addItem('Spanish')
+        self.targetLanguageComboBox.addItem('Hindi')
+        self.targetLanguageComboBox.addItem('Telugu')
+        self.targetLanguageComboBox.addItem('Tamil')
 
         # Create a button to start the translation process
         self.translateBtn = QtWidgets.QPushButton('Translate Subtitles', self)
@@ -39,9 +41,14 @@ class SubtitleTranslator(QtWidgets.QWidget):
         self.outputTextEdit = QTextEdit(self)
         self.outputTextEdit.setReadOnly(True)
 
+        # Create a label to display the selected video name
+        self.videoNameLabel = QLabel(self)
+        self.videoNameLabel.setText('Selected Video: None')
+
         # Set layout
         vbox = QtWidgets.QVBoxLayout()
         vbox.addWidget(self.selectFileBtn)
+        vbox.addWidget(self.videoNameLabel)  # Add the video name label
         vbox.addWidget(self.subtitleTrackComboBox)
         vbox.addWidget(self.targetLanguageComboBox)
         vbox.addWidget(self.translateBtn)
@@ -51,6 +58,7 @@ class SubtitleTranslator(QtWidgets.QWidget):
 
         self.fileName = ""
         self.subtitles = []
+        self.subtitle_language = ""  # Store the selected target language
 
     def selectFile(self):
         # Open file dialog to select video file
@@ -58,6 +66,9 @@ class SubtitleTranslator(QtWidgets.QWidget):
 
         if fileName:
             self.fileName = fileName  # Store the selected file name
+
+            # Update the video name label
+            self.videoNameLabel.setText(f'Selected Video: {self.fileName}')
 
             # Use FFprobe to get the subtitle tracks in the video file
             probe_result = subprocess.run([
@@ -94,6 +105,7 @@ class SubtitleTranslator(QtWidgets.QWidget):
 
             subprocess.run([
                 'ffmpeg',
+                '-y',
                 '-i', self.fileName,
                 '-map', f'0:s:{track_index}',
                 output_subtitle
@@ -141,7 +153,9 @@ class SubtitleTranslator(QtWidgets.QWidget):
             with open('translated_subtitles.srt', 'wb') as f:
                 f.writelines(translated_subtitles)
 
-            self.outputTextEdit.append(f'Translating subtitles to {targetLanguage} and saving as translated_subtitles.srt')
+            self.outputTextEdit.append(f'Translated subtitles to {targetLanguage} and saved as translated_subtitles.srt')
+
+            self.subtitle_language = targetLanguage
 
     def addSubtitlesToVideo(self):
         # Get the file extension of the original video file
@@ -155,16 +169,15 @@ class SubtitleTranslator(QtWidgets.QWidget):
             '-i', self.fileName,
             '-i', 'translated_subtitles.srt',
             '-c', 'copy',   # Copy all streams
-            '-scodec', 'srt',  # Set subtitle codec to srt
-            '-metadata:s:s:0', 'language=eng',  # Set language metadata for subtitle stream
-            '-disposition:s:0', 'default',  # Make the subtitle stream default
+            '-scodec', 'srt',  # Set subtitle codec to mov_text (srt)
+            '-metadata:s:s:1', f'title={self.subtitle_language}',  # Set title metadata for the new subtitle track
+            '-disposition:s:1', 'default',  # Make the new subtitle stream default
             '-map', '0',    # Map all streams from input 0
-            '-map', '1',    # Map subtitle stream from input 1
-            '-sub_charenc', 'UTF-8',  # Specify subtitle character encoding
+            '-map', '1',    # Map subtitle stream from input 1 (the translated subtitles)
             '-y', output_video
         ])
 
-        self.outputTextEdit.append(f'Adding translated subtitles to video and saving as {output_video}')
+        self.outputTextEdit.append(f'Added translated subtitles to video and saved as {output_video}')
 
 
 if __name__ == '__main__':
