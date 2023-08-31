@@ -113,7 +113,7 @@ class SubtitleTranslator(QtWidgets.QWidget):
 
             # Read the extracted subtitles and store lines
             with open(output_subtitle, 'r', encoding='utf-8') as f:
-                self.subtitles = f.readlines()
+                self.subtitles = f.read().split('\n\n')  # Split by empty lines to separate subtitles
 
             self.outputTextEdit.append(f'Subtitle segments extracted from {selected_track}.')
 
@@ -123,20 +123,22 @@ class SubtitleTranslator(QtWidgets.QWidget):
         return cleaned_text
 
     def translateSubtitles(self):
-        # Extract subtitles from selected track
         self.extractSubtitles()
 
-        # Get target language from drop-down menu
         targetLanguage = self.targetLanguageComboBox.currentText()
 
         if targetLanguage != 'Select Target Language':
-            # Translate text lines using googletrans
             translator = Translator()
             translated_subtitles = []
 
-            for i, line in enumerate(self.subtitles):
-                if i % 4 == 2:  # Translate the third line of each segment
-                    cleaned_text = self.clean_subtitle_text(line.strip())
+            for subtitle in self.subtitles:
+                lines = subtitle.strip().split('\n')
+                if len(lines) >= 3:  # Ensure there are enough lines in the subtitle
+                    subtitle_number = lines[0]
+                    timestamp = lines[1]
+                    subtitle_text = '\n'.join(lines[2:])  # Combine text lines
+
+                    cleaned_text = self.clean_subtitle_text(subtitle_text)
                     translated = translator.translate(cleaned_text, src='auto', dest=targetLanguage)
                     translated_text = translated.text
 
@@ -145,12 +147,12 @@ class SubtitleTranslator(QtWidgets.QWidget):
                     encoded_translated_text = cleaned_translated_text.encode('utf-8')
 
                     # Append the cleaned and encoded text to the list
-                    translated_subtitles.append(encoded_translated_text + b'\n')
-                else:
-                    translated_subtitles.append(line.encode('utf-8'))
+                    translated_subtitles.append(f'{subtitle_number}\n{timestamp}\n{encoded_translated_text.decode()}\n')
+
+                    translated_subtitles.append('\n')
 
             # Write the translated subtitles back to the original subtitle file
-            with open('translated_subtitles.srt', 'wb') as f:
+            with open('translated_subtitles.srt', 'w', encoding='utf-8') as f:
                 f.writelines(translated_subtitles)
 
             self.outputTextEdit.append(f'Translated subtitles to {targetLanguage} and saved as translated_subtitles.srt')
